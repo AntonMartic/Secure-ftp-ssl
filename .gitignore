@@ -1,11 +1,3 @@
-# Keystores and certificates
-*.ks
-*.jks
-*.cer
-*.crt
-*.pem
-*.key
-
 # System files
 .DS_Store
 Thumbs.db
