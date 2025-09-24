@@ -86,7 +86,19 @@ public class SecureAdditionClient {
             		break;
             		
             	case "2": // UPLOAD
-            		
+            		System.out.print("Enter filename to upload: "); 
+                    String uploadFilename = scan.nextLine(); // input filename
+                    File uploadFile = new File(CLIENT_FILES_DIR + uploadFilename);
+                    
+                    // Check if file exist
+                    if (!uploadFile.exists()) {
+                        System.out.println("Error: File not found locally");
+                        socketOut.println("ERROR:File not found");
+                    } else {
+                        socketOut.println(uploadFilename); // Send filename to server
+                        uploadFile(socketOut, uploadFile);
+                        System.out.println("Upload completed!");
+                    }
             		break;
             		
             	case "3": // DELETE
@@ -130,6 +142,20 @@ public class SecureAdditionClient {
 		}
     }
 	
+    // Method to upload file to server
+    private void uploadFile(PrintWriter socketOut, File file) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                socketOut.println(line);
+            }
+            reader.close();
+            socketOut.println("END_OF_FILE"); // Signal end of file
+        } catch (Exception e) {
+            System.out.println("Upload error: " + e);
+        }
+    }
 	
 	// The test method for the class @param args Optional port number and host name
 	public static void main(String[] args) {

@@ -113,7 +113,7 @@ public class SecureAdditionServer {
 	                        handleDownload(in, out);
 	                        break;
 	                    case "2": // UPLOAD  
-
+	                    	handleUpload(in, out);
 	                        break;
 	                    case "3": // DELETE
 
@@ -138,7 +138,6 @@ public class SecureAdditionServer {
         
         private void handleDownload(BufferedReader in, PrintWriter out) {
         	try {
-        		
         		String filename = in.readLine();
                 File file = new File(SERVER_FILES_DIR + filename);
                 
@@ -164,6 +163,37 @@ public class SecureAdditionServer {
         	} catch (Exception e) {
                 System.out.println("Download handling error: " + e);
                 out.println("ERROR:Server error during download");
+            }
+        }
+        
+        private void handleUpload(BufferedReader in, PrintWriter out) {
+        	try {
+        		String filename = in.readLine();
+        		
+        		if (filename.startsWith("ERROR:")) {
+                    System.out.println("Client error: " + filename);
+                    return;
+                }
+        		
+        		File uploadDir = new File(SERVER_FILES_DIR);
+                if (!uploadDir.exists()) uploadDir.mkdirs();
+                
+                File file = new File(SERVER_FILES_DIR + filename);
+                FileWriter writer = new FileWriter(file);
+                System.out.println("Receiving file: " + filename);
+                
+                String line;
+                while (!(line = in.readLine()).equals("END_OF_FILE")) {
+                    writer.write(line + "\n");
+                }
+                writer.close();
+                
+                System.out.println("File " + filename + " received successfully");
+                out.println("UPLOAD_SUCCESS");
+                
+        	} catch (Exception e) {
+                System.out.println("Upload handling error: " + e);
+                out.println("ERROR:Server error during upload");
             }
         }
         
