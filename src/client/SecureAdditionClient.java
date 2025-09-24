@@ -102,7 +102,12 @@ public class SecureAdditionClient {
             		break;
             		
             	case "3": // DELETE
+            		System.out.print("Enter filename to delete: "); 
+            		String deleteFilename = scan.nextLine();
+            		socketOut.println(deleteFilename); // Send filename to server
             		
+            		String deleteResult = socketIn.readLine();
+                    System.out.println("Server response: " + deleteResult);
             		break;
             		
             	default:

@@ -116,7 +116,7 @@ public class SecureAdditionServer {
 	                    	handleUpload(in, out);
 	                        break;
 	                    case "3": // DELETE
-
+	                    	handleDelete(in, out);
 	                        break;
 	                    default:
 	                        out.println("ERROR:Invalid option");
@@ -197,6 +197,23 @@ public class SecureAdditionServer {
             }
         }
         
+        private void handleDelete(BufferedReader in, PrintWriter out) {
+        	try {
+        		String filename = in.readLine();
+                File file = new File(SERVER_FILES_DIR + filename);
+                
+                if (file.delete()) {
+                    out.println("File " + filename + " deleted successfully");
+                    System.out.println("File " + filename + " deleted");
+                } else {
+                    out.println("ERROR:File not found or cannot be deleted");
+                    System.out.println("Delete failed for file: " + filename);
+                }
+        	} catch (Exception e) {
+                System.out.println("Delete handling error: " + e);
+                out.println("ERROR:Server error during deletion");
+            }
+        }
         
     }
 	
