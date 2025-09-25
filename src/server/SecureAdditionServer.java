@@ -1,4 +1,3 @@
-// An example class that uses the secure server socket class
 
 package server;
 
@@ -8,15 +7,22 @@ import javax.net.ssl.*;
 import java.security.*;
 import java.util.StringTokenizer;
 
-
+// An example class that uses the secure server socket class
 public class SecureAdditionServer {
 	private int port;
-	// This is not a reserved port number
+	
+	// Default port for server to listen on
 	static final int DEFAULT_PORT = 8189;
+	
+	// Server-side keystore and truststore with passwords
+    // (keystore holds the server's private key + certificate,
+    //  truststore holds certificates of trusted clients)
 	static final String KEYSTORE = "src/server/LIUkeystore.ks";
 	static final String TRUSTSTORE = "src/server/LIUtruststore.ks";
 	static final String KEYSTOREPASS = "123456";
 	static final String TRUSTSTOREPASS = "abcdef";
+	
+	// Folder where server stores its files
 	static final String SERVER_FILES_DIR = "src/server/files/";
 	
 	/** Constructor
@@ -27,10 +33,10 @@ public class SecureAdditionServer {
 		this.port = port;
 	}
 	
-	/** The method that does the work for the class */
+	/** Starts the secure server, sets up SSL context and listens for connections */
 	public void run() {
 		try {
-			
+			// === Load server keystore and truststore ===
 			// Loads the server's keystore containing its private key and certificate
 			// So the server can prove its identity to clients
 			KeyStore ks = KeyStore.getInstance("JCEKS");
@@ -41,6 +47,7 @@ public class SecureAdditionServer {
 			KeyStore ts = KeyStore.getInstance("JCEKS");
 			ts.load(new FileInputStream(TRUSTSTORE), TRUSTSTOREPASS.toCharArray());
 			
+			// === Initialize Key and Trust Manager factories ===
 			// Creates a factory that manages the server's keys for SSL handshake
 			// Handles the server-side of the cryptographic handshake
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -51,6 +58,7 @@ public class SecureAdditionServer {
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
 			tmf.init(ts);
 			
+			// === Create SSLContext and server socket factory ===
 			// Creates the main SSL context that combines keys and trust settings
 			// This is the core SSL engine that handles all secure communication
 			SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -61,18 +69,22 @@ public class SecureAdditionServer {
 			SSLServerSocketFactory sslServerFactory = sslContext.getServerSocketFactory();
 			SSLServerSocket sss = (SSLServerSocket) sslServerFactory.createServerSocket(port);
 			
-			// Server authenticates the client
+			// Enable strong cipher suites
+			sss.setEnabledCipherSuites(sss.getSupportedCipherSuites());
+			
+			// Force client authentication by server (mutual SSL)
 			sss.setNeedClientAuth(true);
-			sss.setEnabledCipherSuites( sss.getSupportedCipherSuites());
 			
 			System.out.println("\n>>>> SecureAdditionServer: active ");
+			
+			// === Main accept loop ===
+			// Accepts new client connections and spins off a thread per client
 			
 			// Waits for a client to connect, then establishes the secure SSL/TLS handshake
 			// 1. Client and server negotiate encryption algorithms
 			// 2. Server proves its identity with certificate
 			// 3. They establish a shared secret key for encryption
 			// 4. Secure channel is ready!
-			
 			while (true) {
                 SSLSocket incoming = (SSLSocket) sss.accept();
                 System.out.println("Client connected!");
@@ -89,7 +101,7 @@ public class SecureAdditionServer {
 		}
 	}
 	
-	// Inner class to handle each client connection
+	/** Inner class to handle each client independently */
     private class ClientHandler extends Thread {
         private SSLSocket socket;
         
@@ -99,15 +111,15 @@ public class SecureAdditionServer {
         
         public void run() {
         	try(
-        			// Creates streams to read from and write to the client
-        			// All data through these streams is automatically encrypted/decrypted by SSL
+        			// Streams automatically encrypted/decrypted by SSL layer
         			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         			PrintWriter out = new PrintWriter(socket.getOutputStream(), true );
     			) {
-        		
+        			// First line from client: which action?
 	        		String option = in.readLine();
 	                System.out.println("Client selected option: " + option);
 	
+	                // Handle requested operation
 	                switch (option) {
 	                    case "1": // DOWNLOAD
 	                        handleDownload(in, out);
@@ -123,7 +135,7 @@ public class SecureAdditionServer {
 	                        break;
 	                }
 	                
-	                // Wait for session end signal
+	                // Wait for end-of-session signal from client
 	                String endSignal = in.readLine();
 	                if ("END_SESSION".equals(endSignal)) {
 	                    System.out.println("Client session ended normally");
@@ -136,6 +148,7 @@ public class SecureAdditionServer {
                 }
     	}
         
+        /** Send a file to client securely */
         private void handleDownload(BufferedReader in, PrintWriter out) {
         	try {
         		String filename = in.readLine();
@@ -147,7 +160,7 @@ public class SecureAdditionServer {
                     return;
                 }
                 
-                out.println("FILE_EXISTS"); // Tell client file exists
+                out.println("FILE_EXISTS"); // tell client the file exists
                 System.out.println("Sending file: " + filename);
                 
                 BufferedReader fileReader = new BufferedReader(new FileReader(file));
@@ -166,6 +179,7 @@ public class SecureAdditionServer {
             }
         }
         
+        /** Receive a file from client securely */
         private void handleUpload(BufferedReader in, PrintWriter out) {
         	try {
         		String filename = in.readLine();
@@ -175,6 +189,7 @@ public class SecureAdditionServer {
                     return;
                 }
         		
+        		// creates folder if it does not exist already
         		File uploadDir = new File(SERVER_FILES_DIR);
                 if (!uploadDir.exists()) uploadDir.mkdirs();
                 
@@ -197,6 +212,7 @@ public class SecureAdditionServer {
             }
         }
         
+        /** Delete a file on server */
         private void handleDelete(BufferedReader in, PrintWriter out) {
         	try {
         		String filename = in.readLine();
@@ -217,11 +233,7 @@ public class SecureAdditionServer {
         
     }
 	
-	
-	/** The test method for the class
-	 * @param args[0] Optional port number in place of
-	 *        the default
-	 */
+    /** Entry point of server */
 	public static void main(String[] args) {
 		int port = DEFAULT_PORT;
 		if (args.length > 0 ) {
