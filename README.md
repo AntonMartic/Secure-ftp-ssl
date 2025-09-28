@@ -1,4 +1,4 @@
-# Secure SSL/TLS File Transfer (Lab 3)
+# Secure SSL/TLS File Transfer
 
 An educational implementation of a secure file transfer system in Java using **SSL/TLS sockets**.  
 This project was developed as part of a Networking and Communications university assignment to demonstrate secure client-server communication, encryption, and authentication.
