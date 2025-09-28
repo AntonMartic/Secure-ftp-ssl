@@ -57,3 +57,60 @@ The system demonstrates core security concepts:
 ```bash
 git clone https://github.com/your-username/secure-ssl-tls-file-transfer.git
 cd secure-ssl-tls-file-transfer
+```
+
+### 2. Generate Keystores and Truststores (if you want your own)
+
+```bash
+# Server keystore
+keytool -genkeypair -alias serverkey -keyalg RSA -keysize 2048 -keystore serverkeystore.jks -validity 365
+
+# Server truststore (import client cert)
+keytool -import -file client.cer -alias clientcert -keystore servertruststore.jks
+
+# Client keystore
+keytool -genkeypair -alias clientkey -keyalg RSA -keysize 2048 -keystore clientkeystore.jks -validity 365
+
+# Client truststore (import server cert)
+keytool -import -file server.cer -alias servercert -keystore clienttruststore.jks
+```
+
+### 3. Compile and Run
+
+Compile server and client:
+```bash
+javac Server.java Client.java
+```
+
+Start the server:
+```bash
+java Server
+```
+
+Start the client:
+```bash
+java Client
+```
+
+### 4. Perform File Operations
+
+From the client side, you can issue commands such as:
+```txt
+download myfile.txt
+upload report.txt
+delete oldfile.txt
+```
+
+All interactions will occur securely over SSL/TLS.
+
+## 📂 Project Structure
+
+--
+
+```txt
+.
+├── Client.java            # Client-side implementation
+├── Server.java            # Server-side implementation
+├── /keystores             # Example keystores and truststores (If you generate your own)
+└── README.md
+```
