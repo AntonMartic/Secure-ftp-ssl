@@ -105,7 +105,7 @@ All interactions will occur securely over SSL/TLS.
 
 ## 📂 Project Structure
 
---
+---
 
 ```txt
 .
